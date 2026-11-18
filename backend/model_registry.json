@@ -1,0 +1,38 @@
+{
+  "model_name": "fraud_detection_ecommerce",
+  "active_version": "v1.2.0",
+  "registry": [
+    {
+      "version": "v1.0.0",
+      "artifact_path": "backend/model.pkl",
+      "framework": "scikit-learn",
+      "release_date": "2026-10-15",
+      "status": "archived",
+      "metrics": {
+        "accuracy": 0.941,
+        "precision": 0.912,
+        "recall": 0.885,
+        "f1_score": 0.898
+      }
+    },
+    {
+      "version": "v1.2.0",
+      "artifact_path": "backend/model.pkl",
+      "framework": "scikit-learn",
+      "release_date": "2026-11-17",
+      "status": "production",
+      "git_commit_tag": "prod-v1.2.0",
+      "metrics": {
+        "accuracy": 0.974,
+        "precision": 0.958,
+        "recall": 0.942,
+        "f1_score": 0.950
+      },
+      "governance": {
+        "pii_anonymized": true,
+        "drift_threshold_psi": 0.15,
+        "approved_by": "Carlos Abraham Aguayo Azpe"
+      }
+    }
+  ]
+}
