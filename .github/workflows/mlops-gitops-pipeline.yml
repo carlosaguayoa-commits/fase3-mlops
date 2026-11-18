@@ -1,0 +1,72 @@
+name: MLOps & GitOps Automated Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  ci-testing-and-data-validation:
+    name: 1. CI - Pruebas de Código, Datos y Gobernanza
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Ejecutar pruebas automatizadas (Pytest - Código, Datos y Modelo)
+        run: |
+          pytest tests/ -v
+
+  build-and-version-container:
+    name: 2. MLOps - Build & Versionado de Imagen Docker
+    needs: ci-testing-and-data-validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Verificar integridad del registro de modelos
+        run: |
+          python -c "import json; d=json.load(open('backend/model_registry.json')); print('Modelo activo:', d['active_version'])"
+
+      - name: Construir imagen Docker versionada
+        run: |
+          docker build -t modelo_fraude:${{ github.sha }} -t modelo_fraude:v1.2.0 ./backend
+          docker images
+
+      - name: Prueba de humo (Smoke Test) del contenedor
+        run: |
+          docker run -d --name test_fraude -p 8000:8000 modelo_fraude:v1.2.0
+          sleep 5
+          curl -f http://localhost:8000/health
+          docker stop test_fraude
+
+  gitops-continuous-deployment:
+    name: 3. GitOps - Validación de Manifiesto y Despliegue Continuo
+    needs: build-and-version-container
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Validar manifiesto declarativo GitOps (YAML)
+        run: |
+          pip install pyyaml
+          python -c "import yaml; docs=list(yaml.safe_load_all(open('gitops/deployment.yaml'))); print(f'Manifiestos validados: {len(docs)} recursos listos para sincronización')"
+
+      - name: Simulación de Sincronización GitOps (ArgoCD / Cloud Run)
+        run: |
+          echo "Estado deseado verificado en rama main."
+          echo "Desplegando imagen modelo_fraude:v1.2.0 en entorno productivo..."
+          echo "Despliegue continuo completado exitosamente."
